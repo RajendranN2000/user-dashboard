@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -14,12 +14,20 @@ import {
 import { MdOutlineApartment } from "react-icons/md";
 import type { Post, User } from "../types";
 import { useTheme } from "../context/ThemeContext";
-import { validation } from "../utils/validation";
 import PostItem from "../components/PostItem";
 import ConfirmModal from "../components/ConfirmModal";
 import EditPostModal from "../components/EditPostModal";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 
-const PAGE_SIZE = 5;
+const CreatePostSchema = Yup.object({
+  title: Yup.string()
+    .trim()
+    .required("Title is required")
+    .min(3, "Title must be at least 3 characters")
+    .max(200, "Title must not exceed 200 characters"),
+  body: Yup.string().trim().max(5000, "Body must not exceed 5000 characters"),
+});
 
 const UserDetail = () => {
   const { theme } = useTheme();
@@ -29,16 +37,12 @@ const UserDetail = () => {
 
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const titleRef = useRef<HTMLInputElement | null>(null);
-  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
-  const [createPostErrors, setCreatePostErrors] = useState<{ title?: string; body?: string }>({});
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePostId, setDeletePostId] = useState<number | null>(null);
@@ -47,20 +51,30 @@ const UserDetail = () => {
     setLoading(true);
     setError(null);
     const t = setTimeout(() => {
-      Promise.all([fetch("/data/users.json"), fetch("/data/posts.json")])
-        .then(async ([r1, r2]) => {
+      const loadData = async () => {
+        try {
+          const [r1, r2] = await Promise.all([
+            fetch("/data/users.json"),
+            fetch("/data/posts.json"),
+          ]);
+
           if (!r1.ok) throw new Error("Failed to load users");
           if (!r2.ok) throw new Error("Failed to load posts");
+
           const users: User[] = await r1.json();
           const postsData: Post[] = await r2.json();
+
           const u = users.find((x) => x.id === userId) || null;
-          if (u) {
-            setUser(u);
-          }
+          if (u) setUser(u);
           setPosts(postsData.filter((p) => p.userId === userId));
-        })
-        .catch((err) => setError(err.message))
-        .finally(() => setLoading(false));
+        } catch (err: any) {
+          setError(err?.message || String(err));
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      void loadData();
     }, 500);
 
     return () => clearTimeout(t);
@@ -73,50 +87,9 @@ const UserDetail = () => {
     );
   }, [posts, query]);
 
-  const visiblePosts = filtered.slice(0, visibleCount);
-
-  useEffect(() => {
-    const onScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >=
-        document.body.offsetHeight - 120
-      ) {
-        setVisibleCount((v) => Math.min(filtered.length, v + PAGE_SIZE));
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [filtered.length]);
-
-  const onAdd = () => {
-    const title = titleRef.current?.value?.trim() || "";
-    const body = bodyRef.current?.value?.trim() || "";
-    
-    const newErrors: { title?: string; body?: string } = {};
-    const titleError = validation.title.validate(title);
-    if (titleError) newErrors.title = titleError;
-    
-    const bodyError = validation.body.validate(body);
-    if (bodyError) newErrors.body = bodyError;
-    
-    if (Object.keys(newErrors).length > 0) {
-      setCreatePostErrors(newErrors);
-      return;
-    }
-    
-    setCreatePostErrors({});
-    const nextId = posts.length ? Math.max(...posts.map((p) => p.id)) + 1 : 1;
-    const newPost: Post = { id: nextId, userId, title, body };
-    setPosts((s) => [newPost, ...s]);
-    if (titleRef.current) titleRef.current.value = "";
-    if (bodyRef.current) bodyRef.current.value = "";
-    setVisibleCount((v) => v + 1);
-    toast.success("Post created successfully!");
-  };
-
   const onSaveEdit = (title: string, body: string) => {
     if (!editingPost) return;
-    
+
     setPosts((s) =>
       s.map((p) => (p.id === editingPost.id ? { ...p, title, body } : p))
     );
@@ -388,76 +361,127 @@ const UserDetail = () => {
           Create New Post
         </h2>
         <div className="space-y-4">
-          <div>
-            <label
-              className={`block text-sm font-medium mb-2 ${
-                theme === "light" ? "text-gray-700" : "text-gray-300"
-              }`}
-            >
-              Post Title * <span className={`text-xs ${theme === "light" ? "text-gray-500" : "text-gray-400"}`}>(3-200 characters)</span>
-            </label>
-            <input
-              ref={titleRef}
-              placeholder="Enter an engaging post title..."
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${
-                createPostErrors.title
-                  ? theme === "light"
-                    ? "border-red-500 focus:ring-red-500 bg-red-50 "
-                    : "border-red-600 focus:ring-red-600 bg-red-900/10 text-white"
-                  : theme === "light"
-                  ? "border-gray-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-blue-500"
-                  : "border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-400"
-              }`}
-            />
-            {createPostErrors.title && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
-                <FiAlertCircle size={16} />
-                <span>{createPostErrors.title}</span>
-              </div>
+          <Formik
+            initialValues={{ title: "", body: "" }}
+            validationSchema={CreatePostSchema}
+            onSubmit={(
+              values: { title: string; body: string },
+              { resetForm }: { resetForm: () => void }
+            ) => {
+              const title = values.title.trim();
+              const body = values.body.trim();
+              const nextId = posts.length
+                ? Math.max(...posts.map((p) => p.id)) + 1
+                : 1;
+              const newPost: Post = { id: nextId, userId, title, body };
+              setPosts((s) => [newPost, ...s]);
+              resetForm();
+              toast.success("✅ Post created successfully!");
+            }}
+          >
+            {({
+              errors,
+              touched,
+            }: {
+              errors: { [k: string]: string };
+              touched: { [k: string]: boolean };
+            }) => (
+              <Form className="space-y-4">
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      theme === "light" ? "text-gray-700" : "text-gray-300"
+                    }`}
+                  >
+                    Post Title *{" "}
+                    <span
+                      className={`text-xs ${
+                        theme === "light" ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    >
+                      (3-200 characters)
+                    </span>
+                  </label>
+                  <Field
+                    name="title"
+                    as="input"
+                    placeholder="Enter an engaging post title..."
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition ${
+                      errors.title && touched.title
+                        ? theme === "light"
+                          ? "border-red-500 focus:ring-red-500 bg-red-50"
+                          : "border-red-600 focus:ring-red-600 bg-red-900/10 text-white"
+                        : theme === "light"
+                        ? "border-gray-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-blue-500"
+                        : "border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-400"
+                    }`}
+                  />
+                  <ErrorMessage name="title">
+                    {(msg: string) => (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
+                        <FiAlertCircle size={16} />
+                        <span>{msg}</span>
+                      </div>
+                    )}
+                  </ErrorMessage>
+                </div>
+
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${
+                      theme === "light" ? "text-gray-700" : "text-gray-300"
+                    }`}
+                  >
+                    Post Body{" "}
+                    <span
+                      className={`text-xs ${
+                        theme === "light" ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    >
+                      (max 5000 characters)
+                    </span>
+                  </label>
+                  <Field
+                    name="body"
+                    as="textarea"
+                    placeholder="Share your thoughts and ideas..."
+                    rows={5}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent resize-none transition ${
+                      errors.body && touched.body
+                        ? theme === "light"
+                          ? "border-red-500 focus:ring-red-500 bg-red-50"
+                          : "border-red-600 focus:ring-red-600 bg-red-900/10"
+                        : theme === "light"
+                        ? "border-gray-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-blue-500"
+                        : "border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-400"
+                    }`}
+                  />
+                  <ErrorMessage name="body">
+                    {(msg: string) => (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
+                        <FiAlertCircle size={16} />
+                        <span>{msg}</span>
+                      </div>
+                    )}
+                  </ErrorMessage>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    type="submit"
+                    className={`px-6 py-2 text-white font-medium rounded-lg transition shadow-lg flex items-center gap-2 ${
+                      theme === "light"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-green-700 hover:bg-green-800"
+                    }`}
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    Publish Post
+                  </button>
+                </div>
+              </Form>
             )}
-          </div>
-          <div>
-            <label
-              className={`block text-sm font-medium mb-2 ${
-                theme === "light" ? "text-gray-700" : "text-gray-300"
-              }`}
-            >
-              Post Body <span className={`text-xs ${theme === "light" ? "text-gray-500" : "text-gray-400"}`}>(max 5000 characters)</span>
-            </label>
-            <textarea
-              ref={bodyRef}
-              placeholder="Share your thoughts and ideas..."
-              rows={5}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent resize-none transition ${
-                createPostErrors.body
-                  ? theme === "light"
-                    ? "border-red-500 focus:ring-red-500 bg-red-50"
-                    : "border-red-600 focus:ring-red-600 bg-red-900/10"
-                  : theme === "light"
-                  ? "border-gray-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-blue-500"
-                  : "border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-400"
-              }`}
-            />
-            {createPostErrors.body && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
-                <FiAlertCircle size={16} />
-                <span>{createPostErrors.body}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-3 justify-end pt-2">
-            <button
-              onClick={onAdd}
-              className={`px-6 py-2 text-white font-medium rounded-lg transition shadow-lg flex items-center gap-2 ${
-                theme === "light"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-green-700 hover:bg-green-800"
-              }`}
-            >
-              <FiPlus className="w-4 h-4" />
-              Publish Post
-            </button>
-          </div>
+          </Formik>
         </div>
       </div>
 
@@ -516,56 +540,19 @@ const UserDetail = () => {
             ({filtered.length})
           </span>
         </h2>
-        {visiblePosts.length > 0 ? (
-          <>
-            {visiblePosts.map((p) => (
-              <PostItem
-                key={p.id}
-                post={p}
-                onEdit={(post) => {
-                  setEditingPost(post);
-                  setShowEditModal(true);
-                }}
-                onDelete={onDeleteConfirm}
-              />
-            ))}
-
-            {visiblePosts.length < filtered.length && (
-              <div className="text-center mt-8">
-                <button
-                  onClick={() =>
-                    setVisibleCount((v) =>
-                      Math.min(filtered.length, v + PAGE_SIZE)
-                    )
-                  }
-                  className={`px-8 py-3 font-medium rounded-lg border transition shadow-md ${
-                    theme === "light"
-                      ? "bg-gray-200 hover:bg-gray-300 text-gray-800 border-gray-300"
-                      : "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
-                  }`}
-                >
-                  Load More Posts
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div
-            className={`p-8 rounded-lg text-center border ${
-              theme === "light"
-                ? "bg-gray-50 border-gray-200"
-                : "bg-gray-700/30 border-gray-700"
-            }`}
-          >
-            <p
-              className={`text-lg ${
-                theme === "light" ? "text-gray-600" : "text-gray-300"
-              }`}
-            >
-              No posts found. Start creating one!
-            </p>
-          </div>
-        )}
+        <>
+          {filtered.map((p) => (
+            <PostItem
+              key={p.id}
+              post={p}
+              onEdit={(post) => {
+                setEditingPost(post);
+                setShowEditModal(true);
+              }}
+              onDelete={onDeleteConfirm}
+            />
+          ))}
+        </>
       </div>
 
       <EditPostModal

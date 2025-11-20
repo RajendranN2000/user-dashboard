@@ -134,8 +134,7 @@ src/
 ├── pages/             # Page components
 │   ├── UsersList.tsx  # Users listing page
 │   └── UserDetail.tsx # User detail page
-├── utils/             # Utility functions
-│   └── validation.ts  # Form validation utilities
+├── utils/             # Utility functions (validation handled by Formik + Yup)
 ├── types.ts           # TypeScript type definitions
 ├── App.tsx            # Main app component
 ├── main.tsx           # Application entry point
