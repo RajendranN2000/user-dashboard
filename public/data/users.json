@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "name": "Leanne Graham",
+    "email": "leanne@example.com",
+    "phone": "1-770-736-8031",
+    "website": "https://hildegard.org",
+    "company": "Romaguera-Crona",
+    "avatar": "https://i.pravatar.cc/150?img=1"
+  },
+  {
+    "id": 2,
+    "name": "Ervin Howell",
+    "email": "ervin@example.com",
+    "phone": "010-692-6593",
+    "website": "https://delphine.biz",
+    "company": "Deckow-Crist",
+    "avatar": "https://i.pravatar.cc/150?img=2"
+  },
+  {
+    "id": 3,
+    "name": "Clementine Bauch",
+    "email": "clementine@example.com",
+    "phone": "1-463-123-4447",
+    "website": "https://ramiro.info",
+    "company": "Romaguera-Jacobson",
+    "avatar": "https://i.pravatar.cc/150?img=3"
+  },
+  {
+    "id": 4,
+    "name": "Patricia Lebsack",
+    "email": "patricia@example.com",
+    "phone": "493-170-9800",
+    "website": "https://kory.org",
+    "company": "Robel-Corkery",
+    "avatar": "https://i.pravatar.cc/150?img=4"
+  },
+  {
+    "id": 5,
+    "name": "Chelsey Dietrich",
+    "email": "chelsey@example.com",
+    "phone": "1-477-935-8478",
+    "website": "https://ambrose.net",
+    "company": "Keebler LLC",
+    "avatar": "https://i.pravatar.cc/150?img=5"
+  },
+  {
+    "id": 6,
+    "name": "Mrs. Dennis Schulist",
+    "email": "dennis@example.com",
+    "phone": "1-770-736-8031",
+    "website": "https://lexi.io",
+    "company": "Considine-Lockman",
+    "avatar": "https://i.pravatar.cc/150?img=6"
+  }
+]

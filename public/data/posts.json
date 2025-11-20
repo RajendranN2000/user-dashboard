@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "title": "Getting started with React",
+    "body": "React is a JavaScript library for building user interfaces with reusable components."
+  },
+  {
+    "id": 2,
+    "userId": 1,
+    "title": "Understanding Hooks",
+    "body": "React Hooks allow you to use state and other React features in functional components."
+  },
+  {
+    "id": 3,
+    "userId": 1,
+    "title": "React Router Guide",
+    "body": "React Router is a library for handling navigation in single-page applications."
+  },
+  {
+    "id": 4,
+    "userId": 2,
+    "title": "TypeScript Basics",
+    "body": "TypeScript adds static typing to JavaScript for better development experience."
+  },
+  {
+    "id": 5,
+    "userId": 2,
+    "title": "Advanced TypeScript",
+    "body": "Learn about generics, interfaces, and advanced TypeScript patterns."
+  },
+  {
+    "id": 6,
+    "userId": 2,
+    "title": "TypeScript with React",
+    "body": "Using TypeScript in React projects to catch errors before runtime."
+  },
+  {
+    "id": 7,
+    "userId": 3,
+    "title": "Tailwind CSS Tutorial",
+    "body": "Tailwind CSS is a utility-first CSS framework for rapid UI development."
+  },
+  {
+    "id": 8,
+    "userId": 3,
+    "title": "Responsive Design with Tailwind",
+    "body": "Build responsive websites using Tailwind's responsive utilities."
+  },
+  {
+    "id": 9,
+    "userId": 4,
+    "title": "State Management in React",
+    "body": "Explore different approaches to managing state in React applications."
+  },
+  {
+    "id": 10,
+    "userId": 4,
+    "title": "Context API Deep Dive",
+    "body": "Understanding the Context API for global state management."
+  },
+  {
+    "id": 11,
+    "userId": 5,
+    "title": "Performance Optimization",
+    "body": "Tips and tricks to optimize React component performance."
+  },
+  {
+    "id": 12,
+    "userId": 5,
+    "title": "React Testing",
+    "body": "Learn how to test React components effectively using testing libraries."
+  },
+  {
+    "id": 13,
+    "userId": 6,
+    "title": "Web Development Best Practices",
+    "body": "Essential best practices for building modern web applications."
+  },
+  {
+    "id": 14,
+    "userId": 6,
+    "title": "Security in Web Apps",
+    "body": "Important security considerations for web applications."
+  }
+]
